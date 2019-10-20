@@ -57,9 +57,10 @@ def kde_fold(tr_Xs, tr_Ys, va_Xs, va_Ys, prob0, prob1, bandwidth):
     return classifier
 
 
-def kde_class(Xs, Ys, bandwidth, folds):
+def kde_cv(Xs, Ys, bandwidth, folds):
     classifier = []
     kf = StratifiedKFold(n_splits = folds)
+    tr_err = 0
     va_err = 0
     for tr_ix, va_ix in kf.split(Ys, Ys):
         tr_Xs = Xs[tr_ix]
@@ -72,8 +73,24 @@ def kde_class(Xs, Ys, bandwidth, folds):
         prob0 = nsum / len(tr_Ys[:])
         prob1 = psum / len(tr_Ys[:])
         classfold = kde_fold2(tr_Xs, tr_Ys, va_Xs, va_Ys, prob0, prob1, bandwidth)
+        #plt.plot(classfold)
+        tr_err += -1
         va_err += -1
-    return va_err/folds
+    return tr_err/folds, va_err/folds
+
+def svm_cv(Xs, Ys, gamma, folds, opt=1):
+    kf = StratifiedKFold(n_splits = folds)
+    tr_err = 0
+    va_err = 0
+    for tr_ix, va_ix in kf.split(Ys, Ys):
+        mach = svm.SVC(C = opt, kernel = 'rbf', gamma = gamma, probability=True)
+        mach.fit(Xs[tr_ix,:],Ys[tr_ix])
+        prob = mach.predict_proba(Xs[:,:])[:,1]
+        squares = (prob-Ys)**2
+        tr_tem, va_tem = np.mean(squares[tr_ix]),np.mean(squares[va_ix])
+        tr_err += tr_tem
+        va_err += va_tem
+    return tr_err, va_err
 
 
 traindata = np.loadtxt('TP1_train.tsv')
@@ -93,25 +110,44 @@ testYs = testdata[:,-1]
 testXs = testdata[:,:-1]
 testXs = (testXs - np.mean(testXs, axis=0))/np.std(testXs, axis=0)
 
+
+plt.figure()
+plt.title('PLACEHOLDER')
 bw = 0.02
-KDEError = []
+KDE_tr_err = []
+KDE_va_err = []
 while bw <= 0.6:
-    KDEError.append(kde_class(trainXs, trainYs, bw, 5))
-    
+    tr_err, va_err = kde_cv(trainXs, trainYs, bw, 5)
+    KDE_tr_err.append(tr_err)
+    KDE_va_err.append(va_err)
     bw += 0.02
     
-plt.plot(KDEError)
+x = np.linspace(0.02, 0.6, len(KDE_tr_err))
+plt.plot(x, KDE_tr_err)
+plt.plot(x, KDE_va_err)
+plt.show()
+#plt.savefig(nbimage,dpi=300,bbox_inches="tight")
+plt.close()
+
 
 GNB = GaussianNB()
 GNB.fit(trainXs, trainYs)
 
+
+plt.figure()
+plt.title('PLACEHOLDER')
 gamma = 0.2
-SVMError = []
+SVM_tr_err = []
+SVM_va_err = []
 while gamma <= 6:
-    SupportVector = svm.SVC(C = 1, kernel = 'rbf', gamma = gamma)
-    SupportVector.fit(trainXs, trainYs)
-    #calc error
-    SVMError.append(SupportVector.score(testXs, testYs))
+    tr_err, va_err = svm_cv(trainXs, trainYs, gamma, 5)
+    SVM_tr_err.append(tr_err)
+    SVM_va_err.append(va_err)
     gamma += 0.2
 
-plt.plot(SVMError)
+x = np.linspace(0.2, 6, len(SVM_tr_err))
+plt.plot(x, SVM_tr_err)
+plt.plot(x, SVM_va_err)
+plt.show()
+#plt.savefig(svmimage,dpi=300,bbox_inches="tight")
+plt.close()
