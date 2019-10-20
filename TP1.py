@@ -123,8 +123,9 @@ while bw <= 0.6:
     bw += 0.02
     
 x = np.linspace(0.02, 0.6, len(KDE_tr_err))
-plt.plot(x, KDE_tr_err)
-plt.plot(x, KDE_va_err)
+plt.plot(x, KDE_tr_err, 'r-', label='Training error')
+plt.plot(x, KDE_va_err, 'b-', label='Cross-validation error')
+plt.legend()
 plt.show()
 #plt.savefig(nbimage,dpi=300,bbox_inches="tight")
 plt.close()
@@ -146,8 +147,9 @@ while gamma <= 6:
     gamma += 0.2
 
 x = np.linspace(0.2, 6, len(SVM_tr_err))
-plt.plot(x, SVM_tr_err)
-plt.plot(x, SVM_va_err)
+plt.plot(x, SVM_tr_err, 'r-', label='Training error')
+plt.plot(x, SVM_va_err, 'b-', label='Cross-validation error')
+plt.legend()
 plt.show()
 #plt.savefig(svmimage,dpi=300,bbox_inches="tight")
 plt.close()
