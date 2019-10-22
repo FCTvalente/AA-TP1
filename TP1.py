@@ -6,7 +6,7 @@ from sklearn import svm
 from sklearn.naive_bayes import GaussianNB 
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import accuracy_score
+from KernelDensityNB import KernelDensityNB
 
 def kde_fold2(tr_Xs, tr_Ys, va_Xs, va_Ys, prob0, prob1, bandwidth):
     kdeP = KernelDensity(bandwidth=bandwidth)
@@ -36,47 +36,51 @@ def kde_fold2(tr_Xs, tr_Ys, va_Xs, va_Ys, prob0, prob1, bandwidth):
 def McNemarSTatistic():
     return 0
     
-def kde_fold(tr_Xs, tr_Ys, va_Xs, va_Ys, prob0, prob1, bandwidth):
-    kdeP0 = KernelDensity(bandwidth=bandwidth)
-    kdeP0.fit(tr_Xs[tr_Ys[:]==1,[0]])
-    arrP0 = kdeP0.score_samples(va_Xs[:,0])
-    kdeP1 = KernelDensity(bandwidth=bandwidth)
-    kdeP1.fit(tr_Xs[tr_Ys[:]==1,1])
-    arrP1 = kdeP1.score_samples(va_Xs[:,1])
-    kdeP2 = KernelDensity(bandwidth=bandwidth)
-    kdeP2.fit(tr_Xs[tr_Ys[:]==1,2])
-    arrP2 = kdeP2.score_samples(va_Xs[:,2])
-    kdeP3 = KernelDensity(bandwidth=bandwidth)
-    kdeP3.fit(tr_Xs[tr_Ys[:]==1,3])
-    arrP3 = kdeP3.score_samples(va_Xs[:,3])
+def kde_fold(Xs, Ys, tr_ix, va_ix, bandwidth):
+    tr_Xs = Xs[tr_ix]
+    tr_Ys = Ys[tr_ix]
+    tr_Xs1 = tr_Xs[tr_Ys == 1,:]
+    tr_Xs0 = tr_Xs[tr_Ys == 0,:]
     
-    sump = [np.log(prob1) + (arrP0[i]+arrP1[i]+arrP2[i]+arrP3[i]) for i in range(len(arrP0))]
+    va_Xs = Xs[va_ix,:]
+    
+    prob1 = np.log(len(tr_Xs1) / len(tr_Ys[:]))
+    prob0 = np.log(len(tr_Xs0) / len(tr_Ys[:]))
+    
+    kdeP0 = KernelDensity(bandwidth=bandwidth)
+    kdeP0.fit(tr_Xs0[:,[0]])
+    arrP0 = kdeP0.score_samples(va_Xs[:,[0]])
+    kdeP1 = KernelDensity(bandwidth=bandwidth)
+    kdeP1.fit(tr_Xs0[:,[1]])
+    arrP1 = kdeP1.score_samples(va_Xs[:,[1]])
+    kdeP2 = KernelDensity(bandwidth=bandwidth)
+    kdeP2.fit(tr_Xs0[:,[2]])
+    arrP2 = kdeP2.score_samples(va_Xs[:,[2]])
+    kdeP3 = KernelDensity(bandwidth=bandwidth)
+    kdeP3.fit(tr_Xs0[:,[3]])
+    arrP3 = kdeP3.score_samples(va_Xs[:,[3]])
+    
+    sump = [prob1 + (arrP0[i]+arrP1[i]+arrP2[i]+arrP3[i]) for i in range(len(arrP0))]
     
     kdeN0 = KernelDensity(bandwidth=bandwidth)
-    kdeN0.fit(tr_Xs[tr_Ys[:]==0,0])
-    arrN0 = kdeN0.score_samples(va_Xs[:,0])
+    kdeN0.fit(tr_Xs1[:,[0]])
+    arrN0 = kdeN0.score_samples(va_Xs[:,[0]])
     kdeN1 = KernelDensity(bandwidth=bandwidth)
-    kdeN1.fit(tr_Xs[tr_Ys[:]==0,1])
-    arrN1 = kdeN1.score_samples(va_Xs[:,1])
+    kdeN1.fit(tr_Xs1[:,[1]])
+    arrN1 = kdeN1.score_samples(va_Xs[:,[1]])
     kdeN2 = KernelDensity(bandwidth=bandwidth)
-    kdeN2.fit(tr_Xs[tr_Ys[:]==0,2])
-    arrN2 = kdeN2.score_samples(va_Xs[:,2])
+    kdeN2.fit(tr_Xs1[:,[2]])
+    arrN2 = kdeN2.score_samples(va_Xs[:,[2]])
     kdeN3 = KernelDensity(bandwidth=bandwidth)
-    kdeN3.fit(tr_Xs[tr_Ys[:]==0,3])
-    arrN3 = kdeN3.score_samples(va_Xs[:,3])
+    kdeN3.fit(tr_Xs1[:,[3]])
+    arrN3 = kdeN3.score_samples(va_Xs[:,[3]])
     
-    sumn = [np.log(prob0) + (arrN0[i]+arrN1[i]+arrN2[i]+arrN3[i]) for i in range(len(arrN0))]
+    sumn = [prob0 + (arrN0[i]+arrN1[i]+arrN2[i]+arrN3[i]) for i in range(len(arrN0))]
     
-    classifier = []
-    i= 0
-    while i < len(sumn):
-        if(sumn[i]>sump[i]):
-            classifier.append(0)
-        else:
-            classifier.append(1)
-        i += 1
-    
-    return classifier
+    classifier = np.zeros(len(sump))
+    classifier[sumn < sump] = 1
+   
+    return 0, 0, classifier
 
 
 def kde_cv(Xs, Ys, bandwidth, folds):
@@ -84,19 +88,11 @@ def kde_cv(Xs, Ys, bandwidth, folds):
     tr_err = 0
     va_err = 0
     for tr_ix, va_ix in kf.split(Ys, Ys):
-        tr_Xs = Xs[tr_ix]
-        tr_Ys = Ys[tr_ix]
-        va_Xs = Xs[va_ix]
-        va_Ys = Ys[va_ix]
-        
-        psum = len(tr_Ys[tr_Ys[:]==1])
-        nsum = len(tr_Ys[tr_Ys[:]==0])
-        prob0 = nsum / len(tr_Ys[:])
-        prob1 = psum / len(tr_Ys[:])
-        a, b, classfold = kde_fold(tr_Xs, tr_Ys, va_Xs, va_Ys, prob0, prob1, bandwidth)
-        tr_err += a
-        va_err += b
-    return tr_err/folds, va_err/folds, classfold
+        mach = KernelDensityNB(bandwidth)
+        mach.fit(Xs[tr_ix,:],Ys[tr_ix])
+        tr_err += 1 - mach.score(Xs[tr_ix], Ys[tr_ix])
+        va_err += 1 - mach.score(Xs[va_ix], Ys[va_ix])
+    return tr_err/folds, va_err/folds, mach
 
 def svm_cv(Xs, Ys, gamma, folds, opt=1):
     kf = StratifiedKFold(n_splits = folds)
@@ -131,19 +127,20 @@ testXs = (testXs - np.mean(testXs, axis=0))/np.std(testXs, axis=0)
 plt.figure()
 plt.title('KDE error for bandwidth optimisation')
 bw = 0.02
-bbw = 0
+bbw = 0.02
 bva_error = 1
 KDE_tr_err = []
 KDE_va_err = []
 BestKDE = 0
 while bw <= 0.6:
+    print(bw)
     tr_err, va_err, temKDE = kde_cv(trainXs, trainYs, bw, 5)
     KDE_tr_err.append(tr_err)
     KDE_va_err.append(va_err)
     if va_err < bva_error:
         bva_error = va_err
         bbw = bbw
-        BestKDE = -1
+        BestKDE = temKDE
     bw += 0.02
     
 x = np.linspace(0.02, 0.6, len(KDE_tr_err))
@@ -161,7 +158,7 @@ GNB.fit(trainXs, trainYs)
 
 plt.figure()
 plt.title('SVC error for gamma optimisation')
-bgamma = 0
+bgamma = 0.2
 bva_error = 1
 gamma = 0.2
 SVM_tr_err = []

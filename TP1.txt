@@ -43,3 +43,17 @@ R9:
 
 Q10: (Optional) Show the estimate of the true error of the optimized SVM classifier (if you did the optional part of the work) and discuss whether it was worth doing this optimization. If you did not do the optional part leave this answer blank.
 R10:
+
+
+
+
+
+        i = 0
+        while i< len(preds):
+            print(sum1[i])
+            print(sum0[i])
+            if(sum0[i] < sum1[i]):
+                preds[i] = 1
+                
+            i += 1
+            
