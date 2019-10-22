@@ -69,7 +69,7 @@ while bw <= 0.6:
     KDE_va_err.append(va_err)
     if va_err < bva_error:
         bva_error = va_err
-        bbw = bbw
+        bbw = bw
         BestKDE = temKDE
     bw += 0.02
     
