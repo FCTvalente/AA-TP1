@@ -137,6 +137,14 @@ KDEvsGNBnm = normalTest(KDEmiss, GNBmiss, KDEsigma, GNBsigma)
 GNBvsSVMnm = normalTest(GNBmiss, SVMmiss, GNBsigma, SVMsigma)
 SVMvsKDEnm = normalTest(SVMmiss, KDEmiss, SVMsigma, KDEsigma)
 
+KDETrueError = 1 - BestKDE.score(testXs, testYs)
+GNBTrueError = 1 - GNB.score(testXs, testYs)
+SVMTrueError = 1 - BestSVM.score(testXs, testYs)
+sform = '{0}: true error = {1}'
+print(sform.format('KDE',KDETrueError))
+print(sform.format('GNB',GNBTrueError))
+print(sform.format('SVM',SVMTrueError))
+
 sform = '{0}: misses = {1} ; sigma = {2}'
 print(sform.format('KDE', KDEmiss, KDEsigma))
 print(sform.format('GNB', GNBmiss, GNBsigma))
