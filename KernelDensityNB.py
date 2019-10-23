@@ -27,6 +27,10 @@ class KernelDensityNB:
         self.prob0 = np.log(len(Xs0) / len(Ys))
         
     def score(self, Xs, Ys):
+        res = accuracy_score(self.predict(Xs), Ys)
+        return res
+    
+    def predict(self, Xs):
         preds1 = []
         preds0 = []
         sum1 = np.zeros(len(Xs))
@@ -43,7 +47,4 @@ class KernelDensityNB:
         
         preds = np.zeros(len(Xs))
         preds[sum0 < sum1] = 1
-        res = accuracy_score(preds, Ys)
-        return res
-    
-    
+        return preds

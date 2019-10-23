@@ -6,10 +6,18 @@ from sklearn import svm
 from sklearn.naive_bayes import GaussianNB 
 from sklearn.model_selection import StratifiedKFold
 from KernelDensityNB import KernelDensityNB
+from comparator import mcNemarTest, score, normalTest
 
 
-def McNemarSTatistic():
-    return 0
+def standardize(vec):
+    res = 0
+    for y in range(vec.shape[1]):
+        if y == 0:
+            res = (vec[:,y] - np.mean(vec[:,y], axis=0))/np.std(vec[:,y], axis=0)
+        else:
+            res = np.column_stack((res, (vec[:,y] - np.mean(vec[:,y], axis=0))/np.std(vec[:,y], axis=0)))
+        
+    return res
     
 
 def kde_cv(Xs, Ys, bandwidth, folds):
@@ -44,14 +52,14 @@ nbimage = 'NB'
 
 trainYs = traindata[:,-1]
 trainXs = traindata[:,:-1]
-trainXs = (trainXs - np.mean(trainXs, axis=0))/np.std(trainXs, axis=0)
+trainXs = standardize(trainXs)
 
 testdata = np.loadtxt('TP1_test.tsv')
 #shuffle(testdata)
 
 testYs = testdata[:,-1]
 testXs = testdata[:,:-1]
-testXs = (testXs - np.mean(testXs, axis=0))/np.std(testXs, axis=0)
+testXs = standardize(testXs)
 
 
 plt.figure()
@@ -74,8 +82,8 @@ while bw <= 0.6:
     bw += 0.02
     
 x = np.linspace(0.02, 0.6, len(KDE_tr_err))
-plt.plot(x, KDE_tr_err, 'r-', label='Training error')
-plt.plot(x, KDE_va_err, 'b-', label='Cross-validation error')
+plt.plot(x, KDE_tr_err, '-', label='Training error')
+plt.plot(x, KDE_va_err, '-', label='Cross-validation error')
 plt.legend()
 plt.show()
 #plt.savefig(nbimage,dpi=300,bbox_inches="tight")
@@ -94,21 +102,47 @@ gamma = 0.2
 SVM_tr_err = []
 SVM_va_err = []
 temSVM = 0
-BestSvm = 0
+BestSVM = 0
 while gamma <= 6:
     tr_err, va_err, temSVM = svm_cv(trainXs, trainYs, gamma, 5)
     SVM_tr_err.append(tr_err)
     SVM_va_err.append(va_err)
     if va_err < bva_error:
-        BestSvm = temSVM
+        BestSVM = temSVM
         bva_error = va_err
         bgamma = gamma
     gamma += 0.2
 
 x = np.linspace(0.2, 6, len(SVM_tr_err))
-plt.plot(x, SVM_tr_err, 'r-', label='Training error')
-plt.plot(x, SVM_va_err, 'b-', label='Cross-validation error')
+plt.plot(x, SVM_tr_err, '-', label='Training error')
+plt.plot(x, SVM_va_err, '-', label='Cross-validation error')
 plt.legend()
 plt.show()
 #plt.savefig(svmimage,dpi=300,bbox_inches="tight")
 plt.close()
+
+KDEpred = BestKDE.predict(testXs)
+GNBpred = GNB.predict(testXs)
+SVMpred = BestSVM.predict(testXs)
+
+KDEmiss, KDEsigma = score(testYs, KDEpred)
+GNBmiss, GNBsigma = score(testYs, GNBpred)
+SVMmiss, SVMsigma = score(testYs, SVMpred)
+
+KDEvsGNBmc = mcNemarTest(testYs, KDEpred, GNBpred)
+GNBvsSVMmc = mcNemarTest(testYs, GNBpred, SVMpred)
+SVMvsKDEmc = mcNemarTest(testYs, SVMpred, KDEpred)
+
+KDEvsGNBnm = normalTest(KDEmiss, GNBmiss, KDEsigma, GNBsigma)
+GNBvsSVMnm = normalTest(GNBmiss, SVMmiss, GNBsigma, SVMsigma)
+SVMvsKDEnm = normalTest(SVMmiss, KDEmiss, SVMsigma, KDEsigma)
+
+sform = '{0}: misses = {1} ; sigma = {2}'
+print(sform.format('KDE', KDEmiss, KDEsigma))
+print(sform.format('GNB', GNBmiss, GNBsigma))
+print(sform.format('SVM', SVMmiss, SVMsigma))
+
+sform = '{0}: Normal Test => {1} ; McNemar Test => {2}'
+print(sform.format('KDE vs GNB', KDEvsGNBnm, KDEvsGNBmc))
+print(sform.format('GNB vs SVM', GNBvsSVMnm, GNBvsSVMmc))
+print(sform.format('SVM vs KDE', SVMvsKDEnm, SVMvsKDEmc))
