@@ -7,39 +7,63 @@ QUESTIONS:
 
 Q1: Considering the data provided, explain the need to standardize the attribute values.
 R1:
+The range of values provided was no comparable between features, for instance the first feature had values between about 3 and negative 3 and the second 50 and negative 50 this probably means that they are in diferent units of measure and are therefore not comparable. We standerdize the values to aliviate this divergence.
 
 
 Q2: Explain how you calculated the parameters for standardization and how you used them in the test set.
-R2:
+R2: 
+We use the average and the standard deviation of each feature to standardize the values of each feature of the test set.
 
 
-Q3: Explain how you calculated the prior probability of an example belonging to a class (the probability before taking into account the attribute values â€‹â€‹of the example) in your NaÃ¯ve Bayes classifier implementation. You may include a relevant piece of your code if this helps you explain.
+Q3: Explain how you calculated the prior probability of an example belonging to a class (the probability before taking into account the attribute values ​​of the example) in your Naïve Bayes classifier implementation. You may include a relevant piece of your code if this helps you explain.
 R3:
+To calculate the prior probability we did the statistical probability of the Y being one or zero. We did the logarithm of the value to avoid overflow or underflow. (Number of 1/Number of values for probability of belonging to 1 and 
+Number of 0/Number of values for probability of belonging to 0
 
-
-Q4: Explain how your NaÃ¯ve Bayes classifier predicts the class to which a test example belongs. You may include a relevant piece of your code if this helps you explain.
+Q4: Explain how your Naïve Bayes classifier predicts the class to which a test example belongs. You may include a relevant piece of your code if this helps you explain.
 R4:
+To classify the example we apply the argmax function to the sum of the prior probability and the conditional probabilities of each feature. argmax(P(x)+ sum(P(y|x))
+
 
 
 Q5: Explain the effect of the bandwidth parameter on your classifier.
 R5:
-
+The bigger the bandwith the smoother the aproximation becomes. This means that smaller bandwidths will have lower training error but higher cross validation error and vice versa.
 
 Q6: Explain what effect the gamma parameter has on the SVM classifier.
 R6:
+The Bigger the gamma the lower the training error although this leads to overfitting wich means that the cross validation error becomes smaller with the variation of the gamma until it stops decreasing to increase slowly
 
 
 Q7: Explain how you determined the best bandwidth and gamma parameters for your classifier and the SVM classifier. You may include a relevant piece of your code if this helps you explain.
 R7:
+We used cross validation of each parameter and chose the one with the least validation error. If we had two values that were the same we would choose the one with the smallest  gamma and the lowest bandwidth. this process is automatic.
 
 
 Q8: Explain how you obtained the best hypothesis for each classifier after optimizing all parameters.
-R8:
+R8: After optimizing the parameters we used the fit functions a second time in the model with the optimized parameter 
+
 
 
 Q9: Show the best parameters, the estimate of the true error for each hypothesis you obtained (your classifier and the two provided by the library), the ranges in the expected number of errors given by the approximate normal test, the McNemar test values, and discuss what you can conclude from this.
-R9:
+R9: 
+Best Bandwidth: 0.14
+Best Gamma: 0.8
+True Error KDE.Naive Bayes: 0.10425 
+True Error Gaussian Naive Bayes: 0.14916
+True Error Standard Vector Machine: 0.07137
+Normal Test Ranges Kde.Naive Bayes: 130 +/- 21.15052
+Normal Test Ranges Gaussian Naive Bayes: 186 +/- 24.65682
+Normal Test Ranges Standard Vector Machine: 89 +/- 17.81854
+McNemar Test KDE.NB vs GNB: 35.17442
+McNemar Test SVM vs KDE.NB: 74.92683	
+McNemar Test GNB vs SVM: 23.18841 
+
+The null hypothesis of the Mcnemar test is rejected(with 95% confidence) in all 3 tests. So therefore we can conclude that the classifiers do not perform identically
+
+From the normal test we can conclude (with 95% confidence) that the SVM classifier is better than the others and that the Gaussian Naive Bayes is worse than the KDE Naive Bayes since the intervals do not intersect.
 
 
 Q10: (Optional) Show the estimate of the true error of the optimized SVM classifier (if you did the optional part of the work) and discuss whether it was worth doing this optimization. If you did not do the optional part leave this answer blank.
 R10:
+

@@ -55,7 +55,6 @@ trainXs = traindata[:,:-1]
 trainXs = standardize(trainXs)
 
 testdata = np.loadtxt('TP1_test.tsv')
-#shuffle(testdata)
 
 testYs = testdata[:,-1]
 testXs = testdata[:,:-1]
@@ -63,7 +62,6 @@ testXs = standardize(testXs)
 
 
 plt.figure()
-plt.title('KDE error for bandwidth optimisation')
 bw = 0.02
 bbw = 0.02
 bva_error = 1
@@ -71,7 +69,6 @@ KDE_tr_err = []
 KDE_va_err = []
 BestKDE = 0
 while bw <= 0.6:
-    print(bw)
     tr_err, va_err, temKDE = kde_cv(trainXs, trainYs, bw, 5)
     KDE_tr_err.append(tr_err)
     KDE_va_err.append(va_err)
@@ -81,13 +78,17 @@ while bw <= 0.6:
         BestKDE = temKDE
     bw += 0.02
     
+plt.title('KDE error for bandwidth optimisation (Best bandwidth: {0:1.2f})'.format(bbw))
 x = np.linspace(0.02, 0.6, len(KDE_tr_err))
 plt.plot(x, KDE_tr_err, '-', label='Training error')
 plt.plot(x, KDE_va_err, '-', label='Cross-validation error')
+plt.plot(bbw, bva_error, 'X')
 plt.legend()
-plt.show()
 #plt.savefig(nbimage,dpi=300,bbox_inches="tight")
+plt.show()
 plt.close()
+
+BestKDE.fit(trainXs, trainYs)
 
 
 GNB = GaussianNB()
@@ -95,7 +96,6 @@ GNB.fit(trainXs, trainYs)
 
 
 plt.figure()
-plt.title('SVC error for gamma optimisation')
 bgamma = 0.2
 bva_error = 1
 gamma = 0.2
@@ -113,13 +113,17 @@ while gamma <= 6:
         bgamma = gamma
     gamma += 0.2
 
+plt.title('SVC error for gamma optimisation (Best gamma: {0:1.2f})'.format(bgamma))
 x = np.linspace(0.2, 6, len(SVM_tr_err))
 plt.plot(x, SVM_tr_err, '-', label='Training error')
 plt.plot(x, SVM_va_err, '-', label='Cross-validation error')
+plt.plot(bgamma, bva_error, 'X')
 plt.legend()
-plt.show()
 #plt.savefig(svmimage,dpi=300,bbox_inches="tight")
+plt.show()
 plt.close()
+
+BestSVM.fit(trainXs, trainYs)
 
 KDEpred = BestKDE.predict(testXs)
 GNBpred = GNB.predict(testXs)
